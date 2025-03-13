@@ -30,12 +30,13 @@ import { Sidebar } from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, TableChart, ViewModule } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation,useNavigate } from "react-router-dom";
 
-const API_URL = "http://localhost:8080/api/consulta";
+const API_URL = "http://localhost:8081/api/consulta";
 
 const ConsultaList = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state } = location;
   const [open, setOpen] = useState(true);
   const [consultas, setConsultas] = useState([]);
@@ -47,8 +48,33 @@ const ConsultaList = () => {
   const [snackbarMessage, setSnackbarMessage] = useState(""); // Mensagem do Snackbar
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Tipo de mensagem (sucesso, erro)
 
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  const checkAuthorization = () => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login");
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    }
+  };
+
   useEffect(() => {
-    fetchConsultas();
+    checkAuthorization();
+    const token = getAuthToken();
+    if (token) {
+      fetchConsultas(token);
+    }
+  
     if (state?.message) {
       setSnackbarMessage(state.message);
       setSnackbarSeverity(state.severity);
@@ -56,19 +82,32 @@ const ConsultaList = () => {
     }
   }, [state]);
 
-  const fetchConsultas = async () => {
+  const fetchConsultas = async (token) => {
+    
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setConsultas(response.data._embedded.consultaDTOList);
     } catch (error) {
       console.error("Erro ao buscar consultas", error);
+      setSnackbarMessage("Erro ao carregar consultas.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
   const handleDelete = async (id) => {
+    const token = getAuthToken();
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      fetchConsultas();
+      await axios.delete(`${API_URL}/${id}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchConsultas(token);
       setSnackbarMessage("Consulta excluída com sucesso!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);

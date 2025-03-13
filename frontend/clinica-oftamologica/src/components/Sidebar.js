@@ -17,13 +17,23 @@ import {
   LocalHospital as LocalHospitalIcon,
   ExitToApp as ExitToAppIcon,
 } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Importa o useNavigate
 
 const drawerWidth = 240;
 const drawerWidthClosed = 60;
 
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation(); // Para verificar a página atual e destacar no menu
+  const navigate = useNavigate(); // Hook de navegação do react-router
+
+  // Função para realizar o logout
+  const handleLogout = () => {
+    // Remove o token do localStorage (ou sessionStorage)
+    localStorage.removeItem("access_token");
+
+    // Redireciona para a página de login
+    navigate("/login");
+  };
 
   return (
     <>
@@ -101,7 +111,7 @@ const Sidebar = ({ open, setOpen }) => {
           <Divider />
 
           {/* Botão de Sair */}
-          <ListItemButton sx={{ color: "error.main" }}>
+          <ListItemButton sx={{ color: "error.main" }} onClick={handleLogout}>
             <ListItemIcon>
               <ExitToAppIcon color="error" />
             </ListItemIcon>

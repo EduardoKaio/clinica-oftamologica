@@ -20,9 +20,9 @@ import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const API_URL_CONSULTA = "http://localhost:8080/api/consulta"; // URL para consulta
-const API_URL_MEDICO = "http://localhost:8080/api/medico"; // URL para médico
-const API_URL_PACIENTE = "http://localhost:8080/api/paciente"; // URL para paciente
+const API_URL_CONSULTA = "http://localhost:8081/api/consulta"; // URL para consulta
+const API_URL_MEDICO = "http://localhost:8081/api/medico"; // URL para médico
+const API_URL_PACIENTE = "http://localhost:8081/api/paciente"; // URL para paciente
 
 const ConsultaEdit = () => {
   const [open, setOpen] = useState(true);
@@ -42,11 +42,35 @@ const ConsultaEdit = () => {
 
   const query = useQuery();
   const consultaId = query.get("id");
+  const getAuthToken = () => localStorage.getItem("access_token");
+  
+
+  const checkAuthorization = () => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate("/login");
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login");
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    }
+  };
 
   // Carregar médicos
   useEffect(() => {
+    checkAuthorization();
+    const token = getAuthToken();
     axios
-      .get(API_URL_MEDICO)
+      .get(API_URL_MEDICO, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((response) => {
         const medicosUnicos = [
           ...new Map(response.data._embedded.medicoDTOList.map((medico) => [medico.id, medico])).values(),
@@ -61,8 +85,12 @@ const ConsultaEdit = () => {
 
   // Carregar pacientes
   useEffect(() => {
+    checkAuthorization();
+    const token = getAuthToken();
     axios
-      .get(API_URL_PACIENTE)
+      .get(API_URL_PACIENTE,{
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then((response) => {
         const pacientesUnicos = [
           ...new Map(response.data._embedded.pacienteDTOList.map((paciente) => [paciente.id, paciente])).values(),
@@ -77,9 +105,13 @@ const ConsultaEdit = () => {
 
   // Carregar consulta para edição
   useEffect(() => {
+    checkAuthorization();
+    const token = getAuthToken();
     if (consultaId) {
       axios
-        .get(`${API_URL_CONSULTA}/${consultaId}`)
+        .get(`${API_URL_CONSULTA}/${consultaId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((response) => {
           const { _embedded, ...consultaData } = response.data;
           setConsulta(consultaData);
@@ -98,10 +130,15 @@ const ConsultaEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = getAuthToken();
       if (consultaId) {
-        await axios.put(`${API_URL_CONSULTA}/${consultaId}`, consulta);
+        await axios.put(`${API_URL_CONSULTA}/${consultaId}`, consulta, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        await axios.post(API_URL_CONSULTA, consulta);
+        await axios.post(API_URL_CONSULTA, consulta, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       navigate('/consultas', {
         state: {

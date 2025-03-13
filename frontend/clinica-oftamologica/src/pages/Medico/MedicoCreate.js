@@ -8,19 +8,15 @@ import {
   Button,
   IconButton,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
 } from "@mui/material";
 import { Sidebar } from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon } from "@mui/icons-material";
-import { Link, useNavigate } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom";
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/medico";
+const API_URL = "/medico";
 
 const MedicoCreate = () => {
   const [open, setOpen] = useState(true);
@@ -31,18 +27,29 @@ const MedicoCreate = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const getAuthToken = () => localStorage.getItem("access_token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const medico = { nome, crm, especialidade, telefone, email };
+    const token = getAuthToken();
+    
+    if (!token) {
+      setError("Usuário não autenticado. Faça login.");
+      return;
+    }
 
     try {
-      await axios.post(API_URL, medico);
-      navigate('/medicos', {
+      await API.post(API_URL, medico, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      navigate("/medicos", {
         state: {
           message: "Médico criado com sucesso!",
-          severity: "success"
-        }
+          severity: "success",
+        },
       });
     } catch (error) {
       setError("Erro ao criar médico.");
@@ -55,18 +62,18 @@ const MedicoCreate = () => {
       <Sidebar open={open} setOpen={setOpen} />
       <Box component="main" sx={{ flexGrow: 1, bgcolor: "background.default", p: 3, mt: 8 }}>
         <Header open={open} drawerWidth={drawerWidth} drawerWidthClosed={drawerWidthClosed} />
-        
+
         <Container>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Link to="/medicos">
               <IconButton
                 sx={{
-                  backgroundColor: "#1976d2", 
-                  color: "white", 
+                  backgroundColor: "#1976d2",
+                  color: "white",
                   borderRadius: "50%",
                   boxShadow: 2,
-                  '&:hover': {
-                    backgroundColor: "#1565c0", 
+                  "&:hover": {
+                    backgroundColor: "#1565c0",
                   },
                 }}
               >
@@ -151,10 +158,10 @@ const MedicoCreate = () => {
                 color="primary"
                 type="submit"
                 fullWidth
-                startIcon={<AddIcon />} 
+                startIcon={<AddIcon />}
                 sx={{
                   bgcolor: "#1976d2",
-                  '&:hover': { bgcolor: "#1565c0" },
+                  "&:hover": { bgcolor: "#1565c0" },
                   borderRadius: 1,
                   display: "flex",
                   justifyContent: "center",

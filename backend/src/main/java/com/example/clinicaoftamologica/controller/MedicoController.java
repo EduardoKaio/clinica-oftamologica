@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.clinicaoftamologica.data.dto.MedicoDTO;
@@ -23,8 +24,9 @@ public class MedicoController {
 
     @Autowired
     private MedicoServices service;
-
+    
     @GetMapping(produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PagedModel<EntityModel<MedicoDTO>>> findAll(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "12") Integer size,
@@ -36,29 +38,34 @@ public class MedicoController {
     }
 
     @GetMapping(value = "/{id}", produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicoDTO> findById(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(service.findById(id));
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML },
             produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+            @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicoDTO> create(@RequestBody MedicoDTO medico) {
         return ResponseEntity.ok(service.create(medico));
     }
 
     @PutMapping(value ="/{id}", consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML },
             produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+            @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicoDTO> update(@RequestBody MedicoDTO medico) {
         return ResponseEntity.ok(service.update(medico));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable(value = "id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/count")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Long> getMedicoCount() {
         long count = service.getMedicoCount();
         Map<String, Long> response = new HashMap<>();

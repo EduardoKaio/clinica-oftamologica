@@ -30,49 +30,91 @@ import { Sidebar } from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, TableChart, ViewModule } from "@mui/icons-material";
-import { Link,useLocation } from "react-router-dom"; // Importando o Link
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Importando o Link
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/paciente";
+const API_URL = "/paciente";
 
 const PacienteList = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state } = location;
   const [open, setOpen] = useState(true);
   const [pacientes, setPacientes] = useState([]);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
-  const [openDialog, setOpenDialog] = useState(false); // Controla a visibilidade do modal
-  const [patientToDelete, setPatientToDelete] = useState(null); // Armazena o paciente a ser excluído
-  const [snackbarOpen, setSnackbarOpen] = useState(false); // Controla o Snackbar
-  const [snackbarMessage, setSnackbarMessage] = useState(""); // Mensagem do Snackbar
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Tipo de mensagem (sucesso, erro)
+  const [openDialog, setOpenDialog] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  const checkAuthorization = () => {
+    const token = getAuthToken(); // Obtém o token
+
+    if (!token) {
+      navigate("/login");
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login");
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    }
+  };
 
   useEffect(() => {
-    fetchPacientes();
+    checkAuthorization();
+
+    const token = getAuthToken(); // Obtém o token
+
+    if (token) {
+      fetchPacientes(token);
+    }
+
     if (state?.message) {
       setSnackbarMessage(state.message);
-      setSnackbarSeverity(state.severity);
+      setSnackbarSeverity(state.severity || "success");
       setSnackbarOpen(true);
     }
   }, [state]);
 
-  const fetchPacientes = async () => {
+  const fetchPacientes = async (token) => {
     try {
-      const response = await axios.get(API_URL);
+      const response = await API.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setPacientes(response.data._embedded.pacienteDTOList);
     } catch (error) {
       console.error("Erro ao buscar pacientes", error);
+      setSnackbarMessage("Erro ao carregar pacientes.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
   const handleDelete = async (id) => {
+    const token = getAuthToken(); // Obtém o token
+
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      fetchPacientes();
+      await API.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchPacientes(token);
       setSnackbarMessage("Paciente excluído com sucesso!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
-      setOpenDialog(false); // Fecha o modal após a exclusão
+      setOpenDialog(false);
     } catch (error) {
       console.error("Erro ao excluir paciente", error);
       setSnackbarMessage("Erro ao excluir paciente.");

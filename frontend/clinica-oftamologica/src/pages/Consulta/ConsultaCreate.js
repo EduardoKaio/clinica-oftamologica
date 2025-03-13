@@ -17,10 +17,11 @@ import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom"; // Importando o Link
+import API from "../Auth/api";
 
-const API_MEDICO_URL = "http://localhost:8080/api/medico";
-const API_PACIENTE_URL = "http://localhost:8080/api/paciente";
-const API_CONSULTA_URL = "http://localhost:8080/api/consulta";
+const API_MEDICO_URL = "/medico";
+const API_PACIENTE_URL = "/paciente";
+const API_CONSULTA_URL = "/consulta";
 
 const ConsultaCreate = () => {
   const [open, setOpen] = useState(true);
@@ -33,51 +34,91 @@ const ConsultaCreate = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
+  const getAuthToken = () => localStorage.getItem("access_token");
 
-  useEffect(() => {
-    // Fetch médicos e pacientes ao carregar o componente
-    fetchMedicos();
-    fetchPacientes();
-  }, []);
-
-  const fetchMedicos = async () => {
-    try {
-      const response = await axios.get(API_MEDICO_URL);
-      setMedicos(response.data._embedded.medicoDTOList);
-    } catch (error) {
-      setError("Erro ao buscar médicos.");
-      console.error("Erro ao buscar médicos", error);
-    }
-  };
-
-  const fetchPacientes = async () => {
-    try {
-      const response = await axios.get(API_PACIENTE_URL);
-      setPacientes(response.data._embedded.pacienteDTOList);
-    } catch (error) {
-      setError("Erro ao buscar pacientes.");
-      console.error("Erro ao buscar pacientes", error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const consulta = { medico: { id: medicoId }, paciente: { id: pacienteId }, dataHora, observacoes };
-
-    try {
-      await axios.post(API_CONSULTA_URL, consulta);
-      setSuccess("Consulta criada com sucesso!");
-      navigate("/consultas", {
-        state: {
-          message: "Consulta criada com sucesso!",
-          severity: "success"
+  
+    // Função para verificar a autorização e redirecionar se não estiver autenticado ou autorizado
+    const checkAuthorization = () => {
+      const token = getAuthToken();
+      if (!token) {
+        navigate("/login");
+      } else {
+        try {
+          const decodedToken = JSON.parse(atob(token.split(".")[1]));
+          const roles = decodedToken.realm_access.roles;
+          if (!roles.includes("ADMIN")) {
+            navigate("/login");
+          }
+        } catch (err) {
+          navigate("/login");
         }
-      });
-    } catch (error) {
-      setError("Erro ao criar consulta.");
-      console.error("Erro ao criar consulta", error);
-    }
-  };
+      }
+    };
+  
+    useEffect(() => {
+      checkAuthorization();
+      fetchMedicos();
+      fetchPacientes();
+    }, []);
+  
+    const fetchMedicos = async () => {
+      const token = getAuthToken();
+      try {
+        const response = await API.get(API_MEDICO_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setMedicos(response.data._embedded.medicoDTOList);
+      } catch (error) {
+        setError("Erro ao buscar médicos.");
+        console.error("Erro ao buscar médicos", error);
+      }
+    };
+  
+    const fetchPacientes = async () => {
+      const token = getAuthToken();
+      try {
+        const response = await API.get(API_PACIENTE_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setPacientes(response.data._embedded.pacienteDTOList);
+      } catch (error) {
+        setError("Erro ao buscar pacientes.");
+        console.error("Erro ao buscar pacientes", error);
+      }
+    };
+  
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      const consulta = { 
+        medico: { id: medicoId }, 
+        paciente: { id: pacienteId }, 
+        dataHora, 
+        observacoes 
+      };
+      const token = getAuthToken();
+  
+      try {
+        await API.post(API_CONSULTA_URL, consulta, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setSuccess("Consulta criada com sucesso!");
+        navigate("/consultas", {
+          state: {
+            message: "Consulta criada com sucesso!",
+            severity: "success",
+          },
+        });
+      } catch (error) {
+        setError("Erro ao criar consulta.");
+        console.error("Erro ao criar consulta", error);
+      }
+    };
 
   return (
     <Box sx={{ display: "flex" }}>

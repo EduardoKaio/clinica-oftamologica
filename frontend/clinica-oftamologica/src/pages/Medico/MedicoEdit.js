@@ -8,19 +8,15 @@ import {
   Button,
   IconButton,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
 } from "@mui/material";
 import { Sidebar } from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/medico";
+const API_URL = "http://localhost:8081/api/medico";
 
 const MedicoEdit = () => {
   const [open, setOpen] = useState(true);
@@ -39,11 +35,35 @@ const MedicoEdit = () => {
 
   const query = useQuery();
   const medicoId = query.get("id");
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  const checkAuthorization = () => {
+    const token = getAuthToken();
+
+    if (!token) {
+      navigate("/login");
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login");
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    }
+  };
 
   useEffect(() => {
+    checkAuthorization();
     if (medicoId) {
-      axios
-        .get(`${API_URL}/${medicoId}`)
+      const token = getAuthToken();
+      API
+        .get(`${API_URL}/${medicoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((response) => {
           const { consultasIds, _links, ...medicoData } = response.data;
           setMedico(medicoData);
@@ -62,10 +82,15 @@ const MedicoEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = getAuthToken();
       if (medicoId) {
-        await axios.put(`${API_URL}/${medicoId}`, medico);
+        await API.put(`${API_URL}/${medicoId}`, medico, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        await axios.post(API_URL, medico);
+        await API.post(API_URL, medico, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       navigate('/medicos', {
         state: {
@@ -109,50 +134,37 @@ const MedicoEdit = () => {
 
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
-                {Object.keys(medico).map((key) => (
+              {Object.keys(medico).map((key) => (
                 key !== "id" && (
-                    <Grid item xs={12} sm={6} key={key}>
-                    {key === "especialidade" ? (
-                        <TextField
-                        label="Especialidade"
-                        variant="outlined"
-                        fullWidth
-                        name={key}
-                        value={medico[key]}
-                        onChange={handleChange}
-                        required
-                        />
-                    ) : (
-                        <TextField
-                        label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1").trim()}
-                        type={key === "crm" ? "text" : "text"}
-                        name={key}
-                        variant="outlined"
-                        fullWidth
-                        value={medico[key]}
-                        onChange={handleChange}
-                        required
-                        />
-                    )}
-                    </Grid>
+                  <Grid item xs={12} sm={6} key={key}>
+                    <TextField
+                      label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1").trim()}
+                      type="text"
+                      name={key}
+                      variant="outlined"
+                      fullWidth
+                      value={medico[key]}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Grid>
                 )
-                ))}
+              ))}
             </Grid>
 
             <Box sx={{ mt: 3 }}>
-                <Button
+              <Button
                 variant="contained"
                 color="primary"
                 type="submit"
                 fullWidth
                 startIcon={<SaveIcon />}
                 sx={{ bgcolor: "#1976d2", '&:hover': { bgcolor: "#1565c0" }, borderRadius: 1 }}
-                >
+              >
                 {medicoId ? "Salvar Alterações" : "Cadastrar Médico"}
-                </Button>
+              </Button>
             </Box>
-            </form>
-
+          </form>
         </Container>
       </Box>
     </Box>

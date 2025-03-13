@@ -6,48 +6,100 @@ import CardInfo from "../components/CardInfo";
 import { motion } from "framer-motion";
 import axios from "axios"; // Importa o axios para fazer a requisição à API
 import { Dashboard } from "@mui/icons-material";
+import { Navigate } from "react-router-dom"; // Importa o Navigate para redirecionamento
 
 const DashboardMain = () => {
   const [open, setOpen] = useState(true);
   const [patientCount, setPatientCount] = useState(0); // Estado para armazenar o número de pacientes
   const [doctorCount, setDoctorCount] = useState(0); // Estado para armazenar o número de médicos
   const [consultationCount, setConsultationCount] = useState(0); // Estado para armazenar o número de consultas
+  const [loading, setLoading] = useState(true); // Estado para controle de carregamento
+  const [error, setError] = useState(""); // Para mensagens de erro
+  const [redirect, setRedirect] = useState(false); // Estado para controle de redirecionamento
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  // Função para verificar o token e as permissões
+  const checkAuthorization = () => {
+    const token = getAuthToken(); // Obtém o token
+
+    if (!token) {
+      setRedirect(true); // Marca para redirecionar
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
+        const roles = decodedToken.realm_access.roles;
+
+        // Verifica se o usuário tem a role "ADMIN"
+        if (!roles.includes("ADMIN")) {
+          setRedirect(true); // Marca para redirecionar
+        }
+      } catch (err) {
+        setRedirect(true); // Se falhar na decodificação, redireciona
+      }
+    }
+  };
 
   // Função para buscar o número de pacientes
-  const fetchPatientCount = async () => {
+  const fetchPatientCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8080/api/paciente/count"); 
+      const response = await axios.get("http://localhost:8081/api/paciente/count", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Passando o token de autorização
+        },
+      });
       setPatientCount(response.data.count); // Atualiza o estado com a contagem de pacientes
     } catch (error) {
-      console.error("Erro ao buscar a contagem de pacientes", error);
+      setError("Erro ao buscar a contagem de pacientes");
     }
   };
 
   // Função para buscar o número de médicos
-  const fetchDoctorCount = async () => {
+  const fetchDoctorCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8080/api/medico/count"); // URL da API para contar médicos
+      const response = await axios.get("http://localhost:8081/api/medico/count", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Passando o token de autorização
+        },
+      });
       setDoctorCount(response.data.count); // Atualiza o estado com a contagem de médicos
     } catch (error) {
-      console.error("Erro ao buscar a contagem de médicos", error);
+      setError("Erro ao buscar a contagem de médicos");
     }
   };
 
   // Função para buscar o número de consultas
-  const fetchConsultationCount = async () => {
+  const fetchConsultationCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8080/api/consulta/count"); // URL da API para contar consultas
+      const response = await axios.get("http://localhost:8081/api/consulta/count", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Passando o token de autorização
+        },
+      });
       setConsultationCount(response.data.count); // Atualiza o estado com a contagem de consultas
     } catch (error) {
-      console.error("Erro ao buscar a contagem de consultas", error);
+      setError("Erro ao buscar a contagem de consultas");
     }
   };
 
   useEffect(() => {
-    fetchPatientCount(); // Chama a função para buscar o número de pacientes ao carregar o componente
-    fetchDoctorCount();  // Chama a função para buscar o número de médicos
-    fetchConsultationCount(); // Chama a função para buscar o número de consultas
-  }, []);
+    checkAuthorization(); // Verifica autorização ao carregar o componente
+
+    // Se a autorização falhar, redireciona para o login
+    if (redirect) return; 
+
+    const token = getAuthToken(); // Obtém o token
+
+    if (token) {
+      fetchPatientCount(token); // Chama a função para buscar o número de pacientes
+      fetchDoctorCount(token);  // Chama a função para buscar o número de médicos
+      fetchConsultationCount(token); // Chama a função para buscar o número de consultas
+    }
+
+    setLoading(false); // Define o carregamento como falso
+  }, [redirect]);
+
+  if (loading) return <div>Carregando...</div>; // Exibe enquanto carrega os dados
+  if (redirect) return <Navigate to="/login" />; // Redireciona para login se não autorizado
 
   return (
     <Box sx={{ display: "flex" }}>
