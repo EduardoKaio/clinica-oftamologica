@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Box, TextField, Button, Typography, Paper, InputAdornment, IconButton, Link } from "@mui/material";
+import { Box, TextField, Button, Typography, Paper, InputAdornment, IconButton, Link, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { styled } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 // Estilos com `styled`
 const Root = styled(Box)({
@@ -31,11 +33,43 @@ const LoginPage = () => {
   const [username, setUsername] = useState(""); // Usado para email
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // Controla a visibilidade da senha
+  const [role, setRole] = useState(""); // Armazena o papel selecionado
+  const [error, setError] = useState(null); // Mensagem de erro
 
-  const handleLogin = (event) => {
+  const navigate = useNavigate(); // Para redirecionar após o login bem-sucedido
+
+  const handleLogin = async (event) => {
     event.preventDefault();
-    // Aqui você pode adicionar a lógica de autenticação depois
-    console.log("Login com", { username, password });
+    try {
+      // Chama o backend para obter o token do Keycloak
+      const response = await axios.post(
+        "http://localhost:8081/api/token", // Substitua com o URL correto do seu backend
+        {
+          username,
+          password,
+          clientId: "clinica-oftamologica-app", // Ajuste conforme sua configuração
+          grantType: "password",
+          role, // Envia o papel selecionado no login
+        }
+      );
+
+      // Armazene o token JWT no localStorage
+      localStorage.setItem("access_token", response.data.access_token);
+
+      // Verifique se o token contém a role selecionada
+      const token = response.data.access_token;
+      const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
+
+      const roles = decodedToken.realm_access.roles;
+      if (roles.includes(role)) {
+        // Redireciona para a página principal após login
+        navigate("/dashboard"); // Redireciona para a página de acesso restrito
+      } else {
+        setError("Você não tem permissão para acessar o sistema.");
+      }
+    } catch (err) {
+      setError("Credenciais inválidas. Tente novamente.");
+    }
   };
 
   const handleClickShowPassword = () => {
@@ -46,6 +80,7 @@ const LoginPage = () => {
     <Root>
       <PaperWrapper>
         <Title variant="h5">Login</Title>
+        {error && <Typography color="error">{error}</Typography>}
         <form onSubmit={handleLogin}>
           <TextField
             label="Email"
@@ -78,6 +113,19 @@ const LoginPage = () => {
               ),
             }}
           />
+          <FormControl fullWidth sx={{ marginBottom: 2 }}>
+            <InputLabel>Selecione o papel</InputLabel>
+            <Select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              label="Selecione o papel"
+              required
+            >
+              <MenuItem value="ADMIN">Administrador</MenuItem>
+              <MenuItem value="MEDICO">Médico</MenuItem>
+              <MenuItem value="PACIENTE">Paciente</MenuItem>
+            </Select>
+          </FormControl>
           <Button
             type="submit"
             variant="contained"
@@ -89,8 +137,8 @@ const LoginPage = () => {
           </Button>
         </form>
 
-        {/* Link para "Esqueceu a senha?" */}
-        <Link href="#" variant="body2" sx={{ marginTop: 2 }}>
+       {/* Link para "Esqueceu a senha?" */}
+       <Link href="/recover-password" variant="body2" sx={{ marginTop: 2 }}>
           Esqueceu a senha?
         </Link>
       </PaperWrapper>

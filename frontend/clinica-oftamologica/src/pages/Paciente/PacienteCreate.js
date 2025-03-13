@@ -19,8 +19,9 @@ import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon } from "@mui/icons-material";
 import { Link,useNavigate } from "react-router-dom"; // Importando o Link
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/paciente";
+const API_URL = "paciente";
 
 const PacienteCreate = () => {
   const [open, setOpen] = useState(true);
@@ -34,13 +35,24 @@ const PacienteCreate = () => {
   const [historicoMedico, setHistoricoMedico] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const getAuthToken = () => localStorage.getItem("access_token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const paciente = { nome, cpf, email, celular, dataDeNascimento, endereco, genero, historicoMedico };
+    const token = getAuthToken(); // Obtém o token
+    
+    if (!token) {
+      setError("Usuário não autenticado. Faça login.");
+      return;
+    }
 
     try {
-      await axios.post(API_URL, paciente);
+      await API.post(API_URL, paciente, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       navigate('/pacientes', {
         state: {
           message: "Paciente criado com sucesso!",

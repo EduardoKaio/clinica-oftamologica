@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,7 @@ public class PacienteController {
     private PacienteServices service;
     
     @GetMapping(produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PagedModel<EntityModel<PacienteDTO>>> findAll(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "12") Integer size,
@@ -45,30 +47,35 @@ public class PacienteController {
     }
     
     @GetMapping(value = "/{id}", produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+    @PreAuthorize("hasRole('ADMIN')")
     public PacienteDTO findById(@PathVariable(value = "id") Long id) {
         return service.findById(id);
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML }, 
             produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+            @PreAuthorize("hasRole('ADMIN')")
     public PacienteDTO create(@RequestBody PacienteDTO paciente) {
         return service.create(paciente);
     }
     
     @PutMapping(value = "/{id}", consumes = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML }, 
             produces = { MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.APPLICATION_YML })
+            @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PacienteDTO> update(@RequestBody PacienteDTO paciente) {
         PacienteDTO updatedPaciente = service.update(paciente);
         return ResponseEntity.ok(updatedPaciente);
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable(value = "id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/count")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Long> getPatientCount() {
         long count = service.getPatientCount();
         Map<String, Long> response = new HashMap<>();

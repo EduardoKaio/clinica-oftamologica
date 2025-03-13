@@ -19,8 +19,9 @@ import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/paciente";
+const API_URL = "/paciente";
 
 const PacienteEdit = () => {
   const [open, setOpen] = useState(true);
@@ -42,11 +43,35 @@ const PacienteEdit = () => {
 
   const query = useQuery();
   const pacienteId = query.get("id");
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  const checkAuthorization = () => {
+    const token = getAuthToken(); // Obtém o token
+
+    if (!token) {
+      navigate("/login");
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login");
+        }
+      } catch (err) {
+        navigate("/login");
+      }
+    }
+  };
 
   useEffect(() => {
+    checkAuthorization();
     if (pacienteId) {
-      axios
-        .get(`${API_URL}/${pacienteId}`)
+      const token = getAuthToken(); // Obtém o token
+      API
+      .get(`${API_URL}/${pacienteId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
         .then((response) => {
           const { consultasIds, _links, ...pacienteData } = response.data;
           setPaciente(pacienteData);
@@ -65,10 +90,15 @@ const PacienteEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = getAuthToken(); // Obtém o token
       if (pacienteId) {
-        await axios.put(`${API_URL}/${pacienteId}`, paciente);
+        await API.put(`${API_URL}/${pacienteId}`, paciente, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
-        await axios.post(API_URL, paciente);
+        await API.post(API_URL, paciente, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
       navigate('/pacientes', {
         state: {

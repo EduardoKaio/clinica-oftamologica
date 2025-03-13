@@ -30,12 +30,13 @@ import { Sidebar } from "../../components/Sidebar";
 import Header from "../../components/Header";
 import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, TableChart, ViewModule } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation,useNavigate } from "react-router-dom";
+import API from "../Auth/api";
 
-const API_URL = "http://localhost:8080/api/medico"; // Alterado para médicos
 
 const MedicoList = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { state } = location;
   const [open, setOpen] = useState(true);
   const [medicos, setMedicos] = useState([]);
@@ -47,28 +48,72 @@ const MedicoList = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  const API_URL = "/medico";
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  // Função para verificar o token e permissões
+  const checkAuthorization = () => {
+    const token = getAuthToken();
+
+    if (!token) {
+      navigate("/login"); // Redireciona para login se não houver token
+    } else {
+      try {
+        const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
+        const roles = decodedToken.realm_access.roles;
+
+        if (!roles.includes("ADMIN")) {
+          navigate("/login"); // Redireciona para login se não for ADMIN
+        }
+      } catch (err) {
+        navigate("/login"); // Redireciona se houver erro no token
+      }
+    }
+  };
+
   useEffect(() => {
-    fetchMedicos();
+    checkAuthorization(); // Verifica autorização ao carregar o componente
+
+    const token = getAuthToken();
+
+    if (token) {
+      fetchMedicos(token);
+    }
+
+    // Verifica se há uma mensagem de sucesso passada da página anterior
     if (state?.message) {
       setSnackbarMessage(state.message);
-      setSnackbarSeverity(state.severity);
+      setSnackbarSeverity(state.severity || "success");
       setSnackbarOpen(true);
     }
-  }, [state]);
+  }, [state]); // Dependência para atualizar a mensagem sempre que `state` mudar
 
-  const fetchMedicos = async () => {
+  const fetchMedicos = async (token) => {
     try {
-      const response = await axios.get(API_URL);
-      setMedicos(response.data._embedded.medicoDTOList); // Alterado para medicoDTOList
+      const response = await API.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Envia o token no cabeçalho
+        },
+      });
+      setMedicos(response.data._embedded.medicoDTOList); // Corrigido para armazenar a lista de médicos corretamente
     } catch (error) {
       console.error("Erro ao buscar médicos", error);
+      setSnackbarMessage("Erro ao carregar médicos.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
 
   const handleDelete = async (id) => {
+    const token = getAuthToken(); // Obtém o token
+
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      fetchMedicos();
+      await API.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Envia o token para autorização
+        },
+      });
+      fetchMedicos(token);
       setSnackbarMessage("Médico excluído com sucesso!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
@@ -246,3 +291,4 @@ const MedicoList = () => {
 };
 
 export default MedicoList;
+
