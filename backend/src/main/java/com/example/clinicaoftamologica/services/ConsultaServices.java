@@ -9,7 +9,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
-import com.example.clinicaoftamologica.controller.ConsultaController;
+import com.example.clinicaoftamologica.controller.admin.ConsultaController;
 import com.example.clinicaoftamologica.data.dto.ConsultaDTO;
 import com.example.clinicaoftamologica.data.dto.MedicoDTO;
 import com.example.clinicaoftamologica.data.dto.PacienteDTO;

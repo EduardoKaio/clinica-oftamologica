@@ -61,11 +61,12 @@ const LoginPage = () => {
       const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
 
       const roles = decodedToken.realm_access.roles;
-      if (roles.includes(role)) {
-        // Redireciona para a página principal após login
-        navigate("/dashboard"); // Redireciona para a página de acesso restrito
+      if (roles.includes("ADMIN")) {
+        navigate("/admin/dashboard");
+      } else if (roles.includes("PACIENTE")) {
+        navigate("/paciente/home");
       } else {
-        setError("Você não tem permissão para acessar o sistema.");
+        setError("Acesso não autorizado.");
       }
     } catch (err) {
       setError("Credenciais inválidas. Tente novamente.");

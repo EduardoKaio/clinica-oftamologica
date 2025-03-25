@@ -1,4 +1,4 @@
-package com.example.clinicaoftamologica.controller;
+package com.example.clinicaoftamologica.controller.admin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +27,7 @@ import com.example.clinicaoftamologica.services.PacienteServices;
 import com.example.clinicaoftamologica.util.MediaType;
 
 @RestController
-@RequestMapping("/api/paciente")
+@RequestMapping("/api/admin/paciente")
 public class PacienteController {
     
     @Autowired

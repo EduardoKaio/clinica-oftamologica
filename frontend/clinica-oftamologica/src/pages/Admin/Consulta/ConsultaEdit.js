@@ -14,15 +14,15 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import { Sidebar } from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-const API_URL_CONSULTA = "http://localhost:8081/api/consulta"; // URL para consulta
-const API_URL_MEDICO = "http://localhost:8081/api/medico"; // URL para médico
-const API_URL_PACIENTE = "http://localhost:8081/api/paciente"; // URL para paciente
+const API_URL_CONSULTA = "http://localhost:8081/api/admin/consulta"; // URL para consulta
+const API_URL_MEDICO = "http://localhost:8081/api/admin/medico"; // URL para médico
+const API_URL_PACIENTE = "http://localhost:8081/api/admin/paciente"; // URL para paciente
 
 const ConsultaEdit = () => {
   const [open, setOpen] = useState(true);

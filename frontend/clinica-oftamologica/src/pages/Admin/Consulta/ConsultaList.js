@@ -26,108 +26,102 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import { Sidebar } from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, TableChart, ViewModule } from "@mui/icons-material";
 import { Link, useLocation,useNavigate } from "react-router-dom";
-import API from "../Auth/api";
 
+const API_URL = "http://localhost:8081/api/admin/consulta";
 
-const MedicoList = () => {
+const ConsultaList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = location;
   const [open, setOpen] = useState(true);
-  const [medicos, setMedicos] = useState([]);
+  const [consultas, setConsultas] = useState([]);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [medicoToDelete, setMedicoToDelete] = useState(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [openDialog, setOpenDialog] = useState(false); // Controla a visibilidade do modal
+  const [consultaToDelete, setConsultaToDelete] = useState(null); // Armazena a consulta a ser excluída
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // Controla o Snackbar
+  const [snackbarMessage, setSnackbarMessage] = useState(""); // Mensagem do Snackbar
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // Tipo de mensagem (sucesso, erro)
 
-  const API_URL = "/medico";
   const getAuthToken = () => localStorage.getItem("access_token");
 
-  // Função para verificar o token e permissões
   const checkAuthorization = () => {
     const token = getAuthToken();
-
     if (!token) {
-      navigate("/login"); // Redireciona para login se não houver token
+      navigate("/login");
     } else {
       try {
-        const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
         const roles = decodedToken.realm_access.roles;
 
         if (!roles.includes("ADMIN")) {
-          navigate("/login"); // Redireciona para login se não for ADMIN
+          navigate("/login");
         }
       } catch (err) {
-        navigate("/login"); // Redireciona se houver erro no token
+        navigate("/login");
       }
     }
   };
 
   useEffect(() => {
-    checkAuthorization(); // Verifica autorização ao carregar o componente
-
+    checkAuthorization();
     const token = getAuthToken();
-
     if (token) {
-      fetchMedicos(token);
+      fetchConsultas(token);
     }
-
-    // Verifica se há uma mensagem de sucesso passada da página anterior
+  
     if (state?.message) {
       setSnackbarMessage(state.message);
-      setSnackbarSeverity(state.severity || "success");
+      setSnackbarSeverity(state.severity);
       setSnackbarOpen(true);
     }
-  }, [state]); // Dependência para atualizar a mensagem sempre que `state` mudar
+  }, [state]);
 
-  const fetchMedicos = async (token) => {
+  const fetchConsultas = async (token) => {
+    
     try {
-      const response = await API.get(API_URL, {
+      const response = await axios.get(API_URL, {
         headers: {
-          Authorization: `Bearer ${token}`, // Envia o token no cabeçalho
+          Authorization: `Bearer ${token}`,
         },
       });
-      setMedicos(response.data._embedded.medicoDTOList); // Corrigido para armazenar a lista de médicos corretamente
+      setConsultas(response.data._embedded.consultaDTOList);
     } catch (error) {
-      console.error("Erro ao buscar médicos", error);
-      setSnackbarMessage("Erro ao carregar médicos.");
+      console.error("Erro ao buscar consultas", error);
+      setSnackbarMessage("Erro ao carregar consultas.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
   };
 
   const handleDelete = async (id) => {
-    const token = getAuthToken(); // Obtém o token
-
+    const token = getAuthToken();
     try {
-      await API.delete(`${API_URL}/${id}`, {
+      await axios.delete(`${API_URL}/${id}`,{
         headers: {
-          Authorization: `Bearer ${token}`, // Envia o token para autorização
+          Authorization: `Bearer ${token}`,
         },
       });
-      fetchMedicos(token);
-      setSnackbarMessage("Médico excluído com sucesso!");
+      fetchConsultas(token);
+      setSnackbarMessage("Consulta excluída com sucesso!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
-      setOpenDialog(false);
+      setOpenDialog(false); // Fecha o modal após a exclusão
     } catch (error) {
-      console.error("Erro ao excluir médico", error);
-      setSnackbarMessage("Erro ao excluir médico.");
+      console.error("Erro ao excluir consulta", error);
+      setSnackbarMessage("Erro ao excluir consulta.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
   };
 
-  const handleOpenDialog = (medico) => {
-    setMedicoToDelete(medico);
+  const handleOpenDialog = (consulta) => {
+    setConsultaToDelete(consulta);
     setOpenDialog(true);
   };
 
@@ -135,8 +129,9 @@ const MedicoList = () => {
     setSnackbarOpen(false);
   };
 
-  const filteredMedicos = medicos.filter((medico) =>
-    medico.nome.toLowerCase().includes(search.toLowerCase())
+  const filteredConsultas = consultas.filter((consulta) =>
+    consulta.paciente.nome.toLowerCase().includes(search.toLowerCase()) || 
+    consulta.medico.nome.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -149,7 +144,7 @@ const MedicoList = () => {
         <Container>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1976d2" }}>
-              Médicos
+              Consultas
             </Typography>
             <Box>
               <IconButton color="primary" onClick={() => setViewMode("cards")}>
@@ -158,16 +153,16 @@ const MedicoList = () => {
               <IconButton color="primary" onClick={() => setViewMode("table")}>
                 <TableChart />
               </IconButton>
-              <Link to="/medicos/create">
+              <Link to="/consultas/create">
                 <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: "#1976d2", ml: 2 }}>
-                  Adicionar Médico
+                  Adicionar Consulta
                 </Button>
               </Link>
             </Box>
           </Box>
 
           <TextField
-            label="Buscar Médico"
+            label="Buscar Consulta"
             variant="outlined"
             fullWidth
             sx={{ mb: 3 }}
@@ -177,30 +172,27 @@ const MedicoList = () => {
 
           {viewMode === "cards" ? (
             <Grid container spacing={3}>
-              {filteredMedicos.map((medico) => (
-                <Grid item xs={12} sm={6} md={4} key={medico.id}>
+              {filteredConsultas.map((consulta) => (
+                <Grid item xs={12} sm={6} md={4} key={consulta.id}>
                   <Card sx={{ borderRadius: 2, boxShadow: 3, transition: "0.3s", '&:hover': { transform: "scale(1.03)" } }}>
                     <CardContent>
                       <Typography variant="h6" fontWeight="bold">
-                        {medico.nome}
+                        {consulta.paciente.nome} - {consulta.medico.nome}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        E-mail: {medico.email}
+                        Data: {new Date(consulta.dataHora).toLocaleString()}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        CRM: {medico.crm}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Especialidade: {medico.especialidade}
+                        Observações: {consulta.observacoes}
                       </Typography>
                     </CardContent>
                     <CardActions sx={{ justifyContent: "flex-end" }}>
-                      <Link to={`/medicos/edit?id=${medico.id}`}>
+                      <Link to={`/consultas/edit?id=${consulta.id}`}>
                         <IconButton color="primary">
                           <EditIcon />
                         </IconButton>
                       </Link>
-                      <IconButton color="error" onClick={() => handleOpenDialog(medico)}>
+                      <IconButton color="error" onClick={() => handleOpenDialog(consulta)}>
                         <DeleteIcon />
                       </IconButton>
                     </CardActions>
@@ -214,34 +206,34 @@ const MedicoList = () => {
                 <TableHead>
                   <TableRow sx={{ backgroundColor: "#1976d2" }}>
                     <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Nome</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>CRM</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>E-mail</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Especialidade</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Paciente</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Médico</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Data</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Observações</TableCell>
                     <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredMedicos.map((medico, index) => (
+                  {filteredConsultas.map((consulta, index) => (
                     <TableRow 
-                      key={medico.id} 
+                      key={consulta.id} 
                       sx={{ 
                         backgroundColor: index % 2 === 0 ? "#f9f9f9" : "white", 
                         transition: "0.3s", '&:hover': { backgroundColor: "#e3f2fd" } 
                       }}
                     >
-                      <TableCell>{medico.id}</TableCell>
-                      <TableCell>{medico.nome}</TableCell>
-                      <TableCell>{medico.crm}</TableCell>
-                      <TableCell>{medico.email}</TableCell>
-                      <TableCell>{medico.especialidade}</TableCell>
+                      <TableCell>{consulta.id}</TableCell>
+                      <TableCell>{consulta.paciente.nome}</TableCell>
+                      <TableCell>{consulta.medico.nome}</TableCell>
+                      <TableCell>{new Date(consulta.dataHora).toLocaleString()}</TableCell>
+                      <TableCell>{consulta.observacoes}</TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
-                        <Link to={`/medicos/edit?id=${medico.id}`}>
+                        <Link to={`/consultas/edit?id=${consulta.id}`}>
                           <IconButton color="primary">
                             <EditIcon />
                           </IconButton>
                         </Link>
-                        <IconButton color="error" onClick={() => handleOpenDialog(medico)}>
+                        <IconButton color="error" onClick={() => handleOpenDialog(consulta)}>
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>
@@ -259,7 +251,7 @@ const MedicoList = () => {
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Tem certeza que deseja excluir o médico {medicoToDelete?.nome}?
+            Tem certeza que deseja excluir a consulta de {consultaToDelete?.paciente.nome} com {consultaToDelete?.medico.nome}?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -267,7 +259,7 @@ const MedicoList = () => {
             Cancelar
           </Button>
           <Button
-            onClick={() => handleDelete(medicoToDelete.id)}
+            onClick={() => handleDelete(consultaToDelete.id)}
             color="error"
             variant="contained"
           >
@@ -290,5 +282,4 @@ const MedicoList = () => {
   );
 };
 
-export default MedicoList;
-
+export default ConsultaList;

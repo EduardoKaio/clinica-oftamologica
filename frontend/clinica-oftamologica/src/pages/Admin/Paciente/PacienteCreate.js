@@ -14,14 +14,14 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import { Sidebar } from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon } from "@mui/icons-material";
 import { Link,useNavigate } from "react-router-dom"; // Importando o Link
-import API from "../Auth/api";
+import API from "../../Auth/api";
 
-const API_URL = "paciente";
+const API_URL = "/admin/paciente";
 
 const PacienteCreate = () => {
   const [open, setOpen] = useState(true);

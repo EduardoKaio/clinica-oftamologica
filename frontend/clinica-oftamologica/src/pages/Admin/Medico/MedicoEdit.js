@@ -8,32 +8,24 @@ import {
   Button,
   IconButton,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import { Sidebar } from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import API from "../Auth/api";
+import API from "../../Auth/api";
 
-const API_URL = "/paciente";
+const API_URL = "http://localhost:8081/api/admin/medico";
 
-const PacienteEdit = () => {
+const MedicoEdit = () => {
   const [open, setOpen] = useState(true);
-  const [paciente, setPaciente] = useState({
+  const [medico, setMedico] = useState({
     nome: "",
-    cpf: "",
+    crm: "",
+    especialidade: "",
+    telefone: "",
     email: "",
-    celular: "",
-    dataDeNascimento: "",
-    endereco: "",
-    genero: "",
-    historicoMedico: "",
   });
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -42,11 +34,11 @@ const PacienteEdit = () => {
   };
 
   const query = useQuery();
-  const pacienteId = query.get("id");
+  const medicoId = query.get("id");
   const getAuthToken = () => localStorage.getItem("access_token");
 
   const checkAuthorization = () => {
-    const token = getAuthToken(); // Obtém o token
+    const token = getAuthToken();
 
     if (!token) {
       navigate("/login");
@@ -66,49 +58,49 @@ const PacienteEdit = () => {
 
   useEffect(() => {
     checkAuthorization();
-    if (pacienteId) {
-      const token = getAuthToken(); // Obtém o token
+    if (medicoId) {
+      const token = getAuthToken();
       API
-      .get(`${API_URL}/${pacienteId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+        .get(`${API_URL}/${medicoId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((response) => {
-          const { consultasIds, _links, ...pacienteData } = response.data;
-          setPaciente(pacienteData);
+          const { consultasIds, _links, ...medicoData } = response.data;
+          setMedico(medicoData);
         })
         .catch((error) => {
-          setError("Erro ao carregar paciente.");
-          console.error("Erro ao carregar paciente", error);
+          setError("Erro ao carregar médico.");
+          console.error("Erro ao carregar médico", error);
         });
     }
-  }, [pacienteId]);
+  }, [medicoId]);
 
   const handleChange = (e) => {
-    setPaciente({ ...paciente, [e.target.name]: e.target.value });
+    setMedico({ ...medico, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = getAuthToken(); // Obtém o token
-      if (pacienteId) {
-        await API.put(`${API_URL}/${pacienteId}`, paciente, {
+      const token = getAuthToken();
+      if (medicoId) {
+        await API.put(`${API_URL}/${medicoId}`, medico, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await API.post(API_URL, paciente, {
+        await API.post(API_URL, medico, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-      navigate('/pacientes', {
+      navigate('/medicos', {
         state: {
-          message: "Paciente editado com sucesso!",
+          message: "Médico editado com sucesso!",
           severity: "success"
         }
       });
     } catch (error) {
-      setError("Erro ao salvar paciente.");
-      console.error("Erro ao salvar paciente", error);
+      setError("Erro ao salvar médico.");
+      console.error("Erro ao salvar médico", error);
     }
   };
 
@@ -120,7 +112,7 @@ const PacienteEdit = () => {
 
         <Container>
           <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-            <Link to="/pacientes">
+            <Link to="/medicos">
               <IconButton
                 sx={{
                   backgroundColor: "#1976d2",
@@ -134,7 +126,7 @@ const PacienteEdit = () => {
               </IconButton>
             </Link>
             <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1976d2", mx: "auto" }}>
-              {pacienteId ? "Editar Paciente" : "Cadastrar Paciente"}
+              {medicoId ? "Editar Médico" : "Cadastrar Médico"}
             </Typography>
           </Box>
 
@@ -142,32 +134,19 @@ const PacienteEdit = () => {
 
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
-              {Object.keys(paciente).map((key) => (
+              {Object.keys(medico).map((key) => (
                 key !== "id" && (
                   <Grid item xs={12} sm={6} key={key}>
-                    {key === "genero" ? (
-                      <FormControl fullWidth required>
-                        <InputLabel>Gênero</InputLabel>
-                        <Select name={key} value={paciente[key]} onChange={handleChange}>
-                          <MenuItem value="masculino">Masculino</MenuItem>
-                          <MenuItem value="feminino">Feminino</MenuItem>
-                          <MenuItem value="outro">Outro</MenuItem>
-                        </Select>
-                        <FormHelperText>Selecione o gênero do paciente</FormHelperText>
-                      </FormControl>
-                    ) : (
-                      <TextField
-                        label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1").trim()}
-                        type={key === "dataDeNascimento" ? "date" : "text"}
-                        name={key}
-                        variant="outlined"
-                        fullWidth
-                        value={paciente[key]}
-                        onChange={handleChange}
-                        required
-                        InputLabelProps={key === "dataDeNascimento" ? { shrink: true } : {}}
-                      />
-                    )}
+                    <TextField
+                      label={key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1").trim()}
+                      type="text"
+                      name={key}
+                      variant="outlined"
+                      fullWidth
+                      value={medico[key]}
+                      onChange={handleChange}
+                      required
+                    />
                   </Grid>
                 )
               ))}
@@ -182,7 +161,7 @@ const PacienteEdit = () => {
                 startIcon={<SaveIcon />}
                 sx={{ bgcolor: "#1976d2", '&:hover': { bgcolor: "#1565c0" }, borderRadius: 1 }}
               >
-                {pacienteId ? "Salvar Alterações" : "Cadastrar Paciente"}
+                {medicoId ? "Salvar Alterações" : "Cadastrar Médico"}
               </Button>
             </Box>
           </form>
@@ -192,4 +171,4 @@ const PacienteEdit = () => {
   );
 };
 
-export default PacienteEdit;
+export default MedicoEdit;

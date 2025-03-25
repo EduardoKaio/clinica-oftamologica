@@ -14,8 +14,8 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
-import com.example.clinicaoftamologica.controller.MedicoController;
-import com.example.clinicaoftamologica.controller.PacienteController;
+import com.example.clinicaoftamologica.controller.admin.MedicoController;
+import com.example.clinicaoftamologica.controller.admin.PacienteController;
 import com.example.clinicaoftamologica.data.dto.PacienteDTO;
 import com.example.clinicaoftamologica.excepetions.RequiredObjectIsNullException;
 import com.example.clinicaoftamologica.excepetions.ResourceNotFoundException;

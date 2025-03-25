@@ -1,37 +1,32 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Drawer,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  IconButton,
   Divider,
   CssBaseline,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  Dashboard as DashboardIcon,
-  Person as PersonIcon,
   Event as EventIcon,
   LocalHospital as LocalHospitalIcon,
   ExitToApp as ExitToAppIcon,
+  Assignment as AssignmentIcon,
+  Home as HomeIcon,
 } from "@mui/icons-material";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Importa o useNavigate
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const drawerWidth = 240;
 const drawerWidthClosed = 60;
 
-const Sidebar = ({ open, setOpen }) => {
-  const location = useLocation(); // Para verificar a página atual e destacar no menu
-  const navigate = useNavigate(); // Hook de navegação do react-router
+const SidebarPaciente = ({ open, setOpen }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Função para realizar o logout
   const handleLogout = () => {
-    // Remove o token do localStorage (ou sessionStorage)
     localStorage.removeItem("access_token");
-
-    // Redireciona para a página de login
     navigate("/login");
   };
 
@@ -53,7 +48,6 @@ const Sidebar = ({ open, setOpen }) => {
         }}
       >
         <List>
-          {/* Botão do menu */}
           <ListItemButton onClick={() => setOpen(!open)}>
             <ListItemIcon>
               <MenuIcon />
@@ -63,45 +57,28 @@ const Sidebar = ({ open, setOpen }) => {
 
           <Divider />
 
-          {/* Links de navegação */}
-          <ListItemButton
-            component={Link}
-            to="/dashboard"
-            selected={location.pathname === "/dashboard"}
-          >
+          <ListItemButton component={Link} to="/paciente/home" selected={location.pathname === "/paciente/home"}>
             <ListItemIcon>
-              <DashboardIcon color="primary" />
+              <HomeIcon color="primary" />
             </ListItemIcon>
-            {open && <ListItemText primary="Dashboard" />}
-          </ListItemButton>
-        
-          <ListItemButton
-            component={Link}
-            to="/pacientes"
-            selected={location.pathname === "/pacientes"}
-          >
-            <ListItemIcon>
-              <PersonIcon color="primary" />
-            </ListItemIcon>
-            {open && <ListItemText primary="Pacientes" />}
+            {open && <ListItemText primary="Home" />}
           </ListItemButton>
 
-          <ListItemButton
-            component={Link}
-            to="/consultas"
-            selected={location.pathname === "/consultas"}
-          >
+          <ListItemButton component={Link} to="/exames" selected={location.pathname === "/exames"}>
+            <ListItemIcon>
+              <AssignmentIcon color="primary" />
+            </ListItemIcon>
+            {open && <ListItemText primary="Exames" />}
+          </ListItemButton>
+
+          <ListItemButton component={Link} to="/paciente/consultas" selected={location.pathname === "/paciente/consultas"}>
             <ListItemIcon>
               <EventIcon color="primary" />
             </ListItemIcon>
             {open && <ListItemText primary="Consultas" />}
           </ListItemButton>
 
-          <ListItemButton
-            component={Link}
-            to="/medicos"
-            selected={location.pathname === "/medicos"}
-          >
+          <ListItemButton component={Link} to="/paciente/medicos" selected={location.pathname === "/paciente/medicos"}>
             <ListItemIcon>
               <LocalHospitalIcon color="primary" />
             </ListItemIcon>
@@ -110,7 +87,6 @@ const Sidebar = ({ open, setOpen }) => {
 
           <Divider />
 
-          {/* Botão de Sair */}
           <ListItemButton sx={{ color: "error.main" }} onClick={handleLogout}>
             <ListItemIcon>
               <ExitToAppIcon color="error" />
@@ -123,4 +99,4 @@ const Sidebar = ({ open, setOpen }) => {
   );
 };
 
-export { Sidebar, drawerWidth, drawerWidthClosed };
+export { SidebarPaciente, drawerWidth, drawerWidthClosed };

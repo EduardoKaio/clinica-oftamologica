@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Container, Grid, Typography, Box, Toolbar } from "@mui/material";
-import { Sidebar, drawerWidth, drawerWidthClosed } from "../components/Sidebar";
-import Header from "../components/Header";
-import CardInfo from "../components/CardInfo";
+import { Sidebar, drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import Header from "../../components/Header";
+import CardInfo from "../../components/CardInfo";
 import { motion } from "framer-motion";
 import axios from "axios"; // Importa o axios para fazer a requisição à API
 import { Dashboard } from "@mui/icons-material";
@@ -42,7 +42,7 @@ const DashboardMain = () => {
   // Função para buscar o número de pacientes
   const fetchPatientCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8081/api/paciente/count", {
+      const response = await axios.get("http://localhost:8081/api/admin/paciente/count", {
         headers: {
           Authorization: `Bearer ${token}`, // Passando o token de autorização
         },
@@ -56,7 +56,7 @@ const DashboardMain = () => {
   // Função para buscar o número de médicos
   const fetchDoctorCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8081/api/medico/count", {
+      const response = await axios.get("http://localhost:8081/api/admin/medico/count", {
         headers: {
           Authorization: `Bearer ${token}`, // Passando o token de autorização
         },
@@ -70,7 +70,7 @@ const DashboardMain = () => {
   // Função para buscar o número de consultas
   const fetchConsultationCount = async (token) => {
     try {
-      const response = await axios.get("http://localhost:8081/api/consulta/count", {
+      const response = await axios.get("http://localhost:8081/api/admin/consulta/count", {
         headers: {
           Authorization: `Bearer ${token}`, // Passando o token de autorização
         },

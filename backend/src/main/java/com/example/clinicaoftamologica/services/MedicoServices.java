@@ -5,13 +5,16 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
-import com.example.clinicaoftamologica.controller.MedicoController;
+
+import com.example.clinicaoftamologica.controller.admin.MedicoController;
+import com.example.clinicaoftamologica.controller.paciente.PacienteMedicoController;
 import com.example.clinicaoftamologica.data.dto.MedicoDTO;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -128,4 +131,5 @@ public class MedicoServices {
     public long getMedicoCount() {
         return repository.count(); // Retorna o número de pacientes na tabela
     }
+        
 }

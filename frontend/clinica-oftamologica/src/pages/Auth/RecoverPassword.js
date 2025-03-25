@@ -41,9 +41,12 @@ const RecoverPasswordPage = () => {
 
     try {
       // Requisição para o backend para enviar a recuperação de senha
-      const response = await axios.post("http://localhost:8081/api/recover-password", {
-        email,
+      const response = await axios.post("http://localhost:8081/api/recover-password", email, {
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
+      
 
       // Sucesso - Mostra a mensagem
       setMessage("Instruções de recuperação de senha enviadas para o seu e-mail.");

@@ -1,4 +1,4 @@
-package com.example.clinicaoftamologica.controller;
+package com.example.clinicaoftamologica.controller.admin;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -26,76 +26,79 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import { Sidebar } from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, TableChart, ViewModule } from "@mui/icons-material";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Importando o Link
-import API from "../Auth/api";
+import { Link, useLocation,useNavigate } from "react-router-dom";
+import API from "../../Auth/api";
 
-const API_URL = "/paciente";
 
-const PacienteList = () => {
+const MedicoList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { state } = location;
   const [open, setOpen] = useState(true);
-  const [pacientes, setPacientes] = useState([]);
+  const [medicos, setMedicos] = useState([]);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
   const [openDialog, setOpenDialog] = useState(false);
-  const [patientToDelete, setPatientToDelete] = useState(null);
+  const [medicoToDelete, setMedicoToDelete] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  const API_URL = "/admin/medico";
   const getAuthToken = () => localStorage.getItem("access_token");
 
+  // Função para verificar o token e permissões
   const checkAuthorization = () => {
-    const token = getAuthToken(); // Obtém o token
+    const token = getAuthToken();
 
     if (!token) {
-      navigate("/login");
+      navigate("/login"); // Redireciona para login se não houver token
     } else {
       try {
-        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const decodedToken = JSON.parse(atob(token.split(".")[1])); // Decodifica o JWT
         const roles = decodedToken.realm_access.roles;
 
         if (!roles.includes("ADMIN")) {
-          navigate("/login");
+          navigate("/login"); // Redireciona para login se não for ADMIN
         }
       } catch (err) {
-        navigate("/login");
+        navigate("/login"); // Redireciona se houver erro no token
       }
     }
   };
 
   useEffect(() => {
-    checkAuthorization();
+    checkAuthorization(); // Verifica autorização ao carregar o componente
 
-    const token = getAuthToken(); // Obtém o token
+    const token = getAuthToken();
 
     if (token) {
-      fetchPacientes(token);
+      fetchMedicos(token);
     }
 
+    // Verifica se há uma mensagem de sucesso passada da página anterior
     if (state?.message) {
       setSnackbarMessage(state.message);
       setSnackbarSeverity(state.severity || "success");
       setSnackbarOpen(true);
     }
-  }, [state]);
+  }, [state]); // Dependência para atualizar a mensagem sempre que `state` mudar
 
-  const fetchPacientes = async (token) => {
+  const fetchMedicos = async (token) => {
     try {
       const response = await API.get(API_URL, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // Envia o token no cabeçalho
         },
       });
-      setPacientes(response.data._embedded.pacienteDTOList);
+      setMedicos(response.data._embedded.medicoDTOList); // Corrigido para armazenar a lista de médicos corretamente
     } catch (error) {
-      console.error("Erro ao buscar pacientes", error);
-      setSnackbarMessage("Erro ao carregar pacientes.");
+      console.error("Erro ao buscar médicos", error);
+      setSnackbarMessage("Erro ao carregar médicos.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
@@ -107,24 +110,24 @@ const PacienteList = () => {
     try {
       await API.delete(`${API_URL}/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // Envia o token para autorização
         },
       });
-      fetchPacientes(token);
-      setSnackbarMessage("Paciente excluído com sucesso!");
+      fetchMedicos(token);
+      setSnackbarMessage("Médico excluído com sucesso!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       setOpenDialog(false);
     } catch (error) {
-      console.error("Erro ao excluir paciente", error);
-      setSnackbarMessage("Erro ao excluir paciente.");
+      console.error("Erro ao excluir médico", error);
+      setSnackbarMessage("Erro ao excluir médico.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
   };
 
-  const handleOpenDialog = (paciente) => {
-    setPatientToDelete(paciente);
+  const handleOpenDialog = (medico) => {
+    setMedicoToDelete(medico);
     setOpenDialog(true);
   };
 
@@ -132,8 +135,8 @@ const PacienteList = () => {
     setSnackbarOpen(false);
   };
 
-  const filteredPacientes = pacientes.filter((paciente) =>
-    paciente.nome.toLowerCase().includes(search.toLowerCase())
+  const filteredMedicos = medicos.filter((medico) =>
+    medico.nome.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -146,7 +149,7 @@ const PacienteList = () => {
         <Container>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1976d2" }}>
-              Pacientes
+              Médicos
             </Typography>
             <Box>
               <IconButton color="primary" onClick={() => setViewMode("cards")}>
@@ -155,16 +158,16 @@ const PacienteList = () => {
               <IconButton color="primary" onClick={() => setViewMode("table")}>
                 <TableChart />
               </IconButton>
-              <Link to="/pacientes/create">
+              <Link to="/medicos/create">
                 <Button variant="contained" startIcon={<AddIcon />} sx={{ bgcolor: "#1976d2", ml: 2 }}>
-                  Adicionar Paciente
+                  Adicionar Médico
                 </Button>
               </Link>
             </Box>
           </Box>
 
           <TextField
-            label="Buscar Paciente"
+            label="Buscar Médico"
             variant="outlined"
             fullWidth
             sx={{ mb: 3 }}
@@ -174,30 +177,30 @@ const PacienteList = () => {
 
           {viewMode === "cards" ? (
             <Grid container spacing={3}>
-              {filteredPacientes.map((paciente) => (
-                <Grid item xs={12} sm={6} md={4} key={paciente.id}>
+              {filteredMedicos.map((medico) => (
+                <Grid item xs={12} sm={6} md={4} key={medico.id}>
                   <Card sx={{ borderRadius: 2, boxShadow: 3, transition: "0.3s", '&:hover': { transform: "scale(1.03)" } }}>
                     <CardContent>
                       <Typography variant="h6" fontWeight="bold">
-                        {paciente.nome}
+                        {medico.nome}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        E-mail: {paciente.email}
+                        E-mail: {medico.email}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        CPF: {paciente.cpf}
+                        CRM: {medico.crm}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Celular: {paciente.celular}
+                        Especialidade: {medico.especialidade}
                       </Typography>
                     </CardContent>
                     <CardActions sx={{ justifyContent: "flex-end" }}>
-                      <Link to={`/pacientes/edit?id=${paciente.id}`}>
+                      <Link to={`/medicos/edit?id=${medico.id}`}>
                         <IconButton color="primary">
                           <EditIcon />
                         </IconButton>
                       </Link>
-                      <IconButton color="error" onClick={() => handleOpenDialog(paciente)}>
+                      <IconButton color="error" onClick={() => handleOpenDialog(medico)}>
                         <DeleteIcon />
                       </IconButton>
                     </CardActions>
@@ -212,33 +215,33 @@ const PacienteList = () => {
                   <TableRow sx={{ backgroundColor: "#1976d2" }}>
                     <TableCell sx={{ color: "white", fontWeight: "bold" }}>ID</TableCell>
                     <TableCell sx={{ color: "white", fontWeight: "bold" }}>Nome</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>CPF</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>CRM</TableCell>
                     <TableCell sx={{ color: "white", fontWeight: "bold" }}>E-mail</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Celular</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: "bold" }}>Especialidade</TableCell>
                     <TableCell sx={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredPacientes.map((paciente, index) => (
+                  {filteredMedicos.map((medico, index) => (
                     <TableRow 
-                      key={paciente.id} 
+                      key={medico.id} 
                       sx={{ 
                         backgroundColor: index % 2 === 0 ? "#f9f9f9" : "white", 
                         transition: "0.3s", '&:hover': { backgroundColor: "#e3f2fd" } 
                       }}
                     >
-                      <TableCell>{paciente.id}</TableCell>
-                      <TableCell>{paciente.nome}</TableCell>
-                      <TableCell>{paciente.cpf}</TableCell>
-                      <TableCell>{paciente.email}</TableCell>
-                      <TableCell>{paciente.celular}</TableCell>
+                      <TableCell>{medico.id}</TableCell>
+                      <TableCell>{medico.nome}</TableCell>
+                      <TableCell>{medico.crm}</TableCell>
+                      <TableCell>{medico.email}</TableCell>
+                      <TableCell>{medico.especialidade}</TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
-                        <Link to={`/pacientes/edit?id=${paciente.id}`}>
+                        <Link to={`/medicos/edit?id=${medico.id}`}>
                           <IconButton color="primary">
                             <EditIcon />
                           </IconButton>
                         </Link>
-                        <IconButton color="error" onClick={() => handleOpenDialog(paciente)}>
+                        <IconButton color="error" onClick={() => handleOpenDialog(medico)}>
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>
@@ -256,7 +259,7 @@ const PacienteList = () => {
         <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Tem certeza que deseja excluir o paciente {patientToDelete?.nome}?
+            Tem certeza que deseja excluir o médico {medicoToDelete?.nome}?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -264,7 +267,7 @@ const PacienteList = () => {
             Cancelar
           </Button>
           <Button
-            onClick={() => handleDelete(patientToDelete.id)}
+            onClick={() => handleDelete(medicoToDelete.id)}
             color="error"
             variant="contained"
           >
@@ -287,4 +290,5 @@ const PacienteList = () => {
   );
 };
 
-export default PacienteList;
+export default MedicoList;
+

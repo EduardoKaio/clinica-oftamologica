@@ -12,16 +12,16 @@ import {
   FormControl,
   FormHelperText,
 } from "@mui/material";
-import { Sidebar } from "../../components/Sidebar";
-import Header from "../../components/Header";
-import { drawerWidth, drawerWidthClosed } from "../../components/Sidebar";
+import {Sidebar} from "../../../components/Sidebar";
+import Header from "../../../components/Header";
+import { drawerWidth, drawerWidthClosed } from "../../../components/Sidebar";
 import { ArrowBack as ArrowBackIcon, Add as AddIcon } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom"; // Importando o Link
-import API from "../Auth/api";
+import API from "../../Auth/api";
 
-const API_MEDICO_URL = "/medico";
-const API_PACIENTE_URL = "/paciente";
-const API_CONSULTA_URL = "/consulta";
+const API_MEDICO_URL = "/admin/medico";
+const API_PACIENTE_URL = "/admin/paciente";
+const API_CONSULTA_URL = "/admin/consulta";
 
 const ConsultaCreate = () => {
   const [open, setOpen] = useState(true);
